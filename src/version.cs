@@ -1,6 +1,4 @@
-﻿namespace Leopotam.EcsLite;
-
-public struct Version
+﻿public struct Version
 {
     public uint Value;
 }

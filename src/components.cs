@@ -194,6 +194,7 @@ namespace Leopotam.EcsLite {
                 _autoResetHandler?.Invoke (ref _denseItems[idx]);
             }
             _sparseItems[entity] = idx;
+            RaiseEntityVersion(entity);
             _world.OnEntityChangeInternal (entity, _id, true);
             _world.AddComponentToRawEntityInternal (entity, _id);
 #if DEBUG || LEOECSLITE_WORLD_EVENTS
@@ -208,10 +209,22 @@ namespace Leopotam.EcsLite {
             if (!_world.IsEntityAliveInternal (entity)) { throw new Exception ("Cant touch destroyed entity."); }
             if (_sparseItems[entity] == 0) { throw new Exception ($"Cant get \"{typeof (T).Name}\" component - not attached."); }
 #endif
-            _world.GetPool<Version>().Get(_entity).Value++;
+            RaiseEntityVersion(entity);
             return ref _denseItems[_sparseItems[entity]];
         }
         
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        private void RaiseEntityVersion (int entity) {
+            var pool = _world.GetPool<Version>();
+            if (pool.Has(entity))
+                _world.GetPool<Version>()._denseItems[_sparseItems[entity]].Value++;
+            else
+                pool.Add(entity) = new Version()
+                {
+                    Value = 1
+                };
+        }
+
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public T Read (int entity) {
 #if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
@@ -247,6 +260,7 @@ namespace Leopotam.EcsLite {
                 }
                 sparseData = 0;
                 var componentsCount = _world.RemoveComponentFromRawEntityInternal (entity, _id);
+                RaiseEntityVersion(entity);
 #if DEBUG || LEOECSLITE_WORLD_EVENTS
                 _world.RaiseEntityChangeEvent (entity, _id, false);
 #endif
