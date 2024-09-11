@@ -208,7 +208,17 @@ namespace Leopotam.EcsLite {
             if (!_world.IsEntityAliveInternal (entity)) { throw new Exception ("Cant touch destroyed entity."); }
             if (_sparseItems[entity] == 0) { throw new Exception ($"Cant get \"{typeof (T).Name}\" component - not attached."); }
 #endif
+            _world.GetPool<Version>().Get(_entity).Value++;
             return ref _denseItems[_sparseItems[entity]];
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public T Read (int entity) {
+#if DEBUG && !LEOECSLITE_NO_SANITIZE_CHECKS
+            if (!_world.IsEntityAliveInternal (entity)) { throw new Exception ("Cant touch destroyed entity."); }
+            if (_sparseItems[entity] == 0) { throw new Exception ($"Cant get \"{typeof (T).Name}\" component - not attached."); }
+#endif
+            return _denseItems[_sparseItems[entity]];
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
